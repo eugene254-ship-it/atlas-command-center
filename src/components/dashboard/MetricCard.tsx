@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Maximize2 } from "lucide-react";
 import { ReactNode } from "react";
 
 interface MetricCardProps {
@@ -10,9 +10,10 @@ interface MetricCardProps {
   subtitle?: string;
   children?: ReactNode;
   delay?: number;
+  onClick?: () => void;
 }
 
-const MetricCard = ({ label, value, change, trend = "flat", subtitle, children, delay = 0 }: MetricCardProps) => {
+const MetricCard = ({ label, value, change, trend = "flat", subtitle, children, delay = 0, onClick }: MetricCardProps) => {
   const TrendIcon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
   const trendClass = trend === "up" ? "trend-up" : trend === "down" ? "trend-down" : "text-muted-foreground";
 
@@ -21,8 +22,14 @@ const MetricCard = ({ label, value, change, trend = "flat", subtitle, children, 
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
-      className="glass-surface rounded-lg p-5 flex flex-col gap-3"
+      className={`glass-surface rounded-lg p-5 flex flex-col gap-3 group relative ${onClick ? "cursor-pointer hover:border-primary/30 transition-colors" : ""}`}
+      onClick={onClick}
     >
+      {onClick && (
+        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Maximize2 className="w-3.5 h-3.5 text-muted-foreground" />
+        </div>
+      )}
       <span className="metric-label">{label}</span>
       <div className="flex items-end gap-3">
         <span className="metric-value text-foreground">{value}</span>
