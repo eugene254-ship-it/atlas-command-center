@@ -14,7 +14,119 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      alert_notifications: {
+        Row: {
+          alert_id: string | null
+          id: string
+          is_read: boolean
+          message: string
+          metric_key: string
+          metric_value: number
+          severity: string
+          threshold_value: number
+          triggered_at: string
+        }
+        Insert: {
+          alert_id?: string | null
+          id?: string
+          is_read?: boolean
+          message: string
+          metric_key: string
+          metric_value: number
+          severity?: string
+          threshold_value: number
+          triggered_at?: string
+        }
+        Update: {
+          alert_id?: string | null
+          id?: string
+          is_read?: boolean
+          message?: string
+          metric_key?: string
+          metric_value?: number
+          severity?: string
+          threshold_value?: number
+          triggered_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_notifications_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "metric_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dashboard_metrics: {
+        Row: {
+          created_at: string
+          id: string
+          metadata: Json | null
+          metric_key: string
+          metric_unit: string | null
+          metric_value: number
+          recorded_at: string
+          section: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_key: string
+          metric_unit?: string | null
+          metric_value: number
+          recorded_at?: string
+          section: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_key?: string
+          metric_unit?: string | null
+          metric_value?: number
+          recorded_at?: string
+          section?: string
+        }
+        Relationships: []
+      }
+      metric_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          is_active: boolean
+          last_triggered_at: string | null
+          message: string | null
+          metric_key: string
+          severity: string
+          threshold_value: number
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          message?: string | null
+          metric_key: string
+          severity?: string
+          threshold_value: number
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_triggered_at?: string | null
+          message?: string | null
+          metric_key?: string
+          severity?: string
+          threshold_value?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
