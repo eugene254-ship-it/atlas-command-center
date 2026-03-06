@@ -32,7 +32,7 @@ const MetricCard = ({ label, value, change, trend = "flat", subtitle, children, 
       )}
       <span className="metric-label">{label}</span>
       <div className="flex items-end gap-3">
-        <span className="metric-value text-foreground">{value}</span>
+        <span className="metric-value text-foreground text-2xl sm:text-3xl">{value}</span>
         {change && (
           <div className={`flex items-center gap-1 text-sm font-medium ${trendClass} pb-1`}>
             <TrendIcon className="w-3.5 h-3.5" />
