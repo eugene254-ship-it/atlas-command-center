@@ -91,7 +91,7 @@
   }
 
   .metric-value {
-    @apply font-mono-data text-3xl font-semibold tracking-tight;
+    @apply font-mono-data font-semibold tracking-tight;
   }
 
   .metric-label {

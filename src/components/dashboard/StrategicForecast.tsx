@@ -59,7 +59,7 @@ const StrategicForecast = () => {
   return (
     <DashboardSection title="Strategic Forecast — Scenario Modeling" delay={1.2}>
       <div className="glass-surface rounded-lg p-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 sm:mb-6">
           <div>
             <h3 className="text-sm font-medium text-foreground">3-Year Projection</h3>
             <p className="text-xs text-muted-foreground mt-0.5">Revenue, ecosystem, and platform growth under different assumptions</p>
@@ -81,7 +81,7 @@ const StrategicForecast = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Revenue Forecast */}
           <div>
             <span className="metric-label">Revenue Projection</span>
@@ -166,7 +166,7 @@ const StrategicForecast = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mt-6 p-4 rounded-md bg-secondary/50 border border-border/50"
         >
-          <div className="grid grid-cols-3 gap-4 text-center">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
             <div>
               <span className="text-xs text-muted-foreground">Revenue CAGR</span>
               <div className="font-mono text-sm text-foreground mt-1">

@@ -82,7 +82,7 @@ const MarketExpansion = () => (
             ))}
           </svg>
         </div>
-        <div className="grid grid-cols-3 gap-3 mt-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4">
           {regions.slice(0, 3).map((r) => (
             <div key={r.name} className="text-xs space-y-1">
               <span className="text-muted-foreground">{r.name}</span>
