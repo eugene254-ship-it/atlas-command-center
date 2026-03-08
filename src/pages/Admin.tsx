@@ -599,7 +599,12 @@ const Admin = () => {
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-2">
                                   <Mail className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                                  <span className="text-foreground text-xs sm:text-sm truncate max-w-[180px]">{u.email}</span>
+                                  <span className={`text-xs sm:text-sm truncate max-w-[180px] ${u.banned_until ? "text-muted-foreground line-through" : "text-foreground"}`}>{u.email}</span>
+                                  {u.banned_until && (
+                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-destructive/10 text-destructive border border-destructive/20">
+                                      <Ban className="w-2.5 h-2.5" /> Suspended
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="text-[10px] text-muted-foreground mt-0.5 pl-5.5">
                                   Joined {new Date(u.created_at).toLocaleDateString()}
