@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { AdminNotificationBell } from "@/components/dashboard/AdminNotificationBell";
 import {
   ArrowLeft,
   Shield,
@@ -376,9 +377,12 @@ const Admin = () => {
               <span className="text-xs text-muted-foreground">User & Role Management</span>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Users className="w-3.5 h-3.5" />
-            <span>{users.length} users</span>
+          <div className="flex items-center gap-3">
+            <AdminNotificationBell />
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Users className="w-3.5 h-3.5" />
+              <span>{users.length} users</span>
+            </div>
           </div>
         </div>
       </header>

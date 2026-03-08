@@ -44,6 +44,36 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_notifications: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          is_read: boolean
+          message: string
+          metadata: Json | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          is_read?: boolean
+          message: string
+          metadata?: Json | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          metadata?: Json | null
+          title?: string
+        }
+        Relationships: []
+      }
       alert_notifications: {
         Row: {
           alert_id: string | null
