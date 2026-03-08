@@ -70,6 +70,8 @@ const ACTION_LABELS: Record<string, string> = {
   role_granted: "Granted role",
   role_revoked: "Revoked role",
   user_invited: "Invited user",
+  user_suspended: "Suspended user",
+  user_reactivated: "Reactivated user",
 };
 
 const downloadCsv = (filename: string, headers: string[], rows: string[][]) => {
