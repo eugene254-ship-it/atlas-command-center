@@ -113,8 +113,12 @@ const Index = () => {
           <MarketExpansion />
           <OperationalVelocity />
           <EcosystemGrowth />
-          <OrganizationalHealth />
-          <StrategicForecast />
+          <AdminSection label="Organizational Health">
+            <OrganizationalHealth />
+          </AdminSection>
+          <AdminSection label="Strategic Forecast">
+            <StrategicForecast />
+          </AdminSection>
 
           {/* Footer */}
           <div className="border-t border-border/30 pt-6 pb-8 text-center">
