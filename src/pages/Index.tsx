@@ -11,14 +11,18 @@ import { DateRangeProvider, DateRangePicker } from "@/components/dashboard/DateR
 import ExportButton from "@/components/dashboard/ExportButton";
 import AlertNotifications from "@/components/dashboard/AlertNotifications";
 import AdminSection from "@/components/dashboard/AdminSection";
-import { Activity, Menu, LogOut } from "lucide-react";
+import { Activity, Menu, LogOut, Shield } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const dashboardRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { signOut, user } = useAuth();
+  const { isAdmin } = useUserRole();
+  const navigate = useNavigate();
 
   return (
     <DateRangeProvider>
@@ -48,6 +52,18 @@ const Index = () => {
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-glow" />
                 <span className="text-xs text-muted-foreground">Live · March 2026</span>
               </div>
+              {isAdmin && (
+                <>
+                  <button
+                    onClick={() => navigate("/admin")}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md bg-secondary/50 text-muted-foreground border border-border/50 hover:text-foreground hover:bg-secondary transition-all font-medium print:hidden"
+                  >
+                    <Shield className="w-3.5 h-3.5" />
+                    <span className="hidden lg:inline">Admin</span>
+                  </button>
+                  <div className="w-px h-6 bg-border/50 print:hidden" />
+                </>
+              )}
               <div className="w-px h-6 bg-border/50 print:hidden" />
               <button
                 onClick={signOut}
