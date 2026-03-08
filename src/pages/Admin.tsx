@@ -276,7 +276,21 @@ const Admin = () => {
     });
     setSelectedIds(new Set());
     setBulkProcessing(false);
+    setConfirmAction(null);
     await fetchUsers();
+  };
+
+  const toggleBan = async (userId: string, ban: boolean) => {
+    setBanningUser(userId);
+    try {
+      await apiCall("toggle_ban", "POST", { user_id: userId, ban });
+      toast({ title: ban ? "User suspended" : "User reactivated" });
+      await fetchUsers();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setBanningUser(null);
+    }
   };
 
   const toggleRole = async (userId: string, role: string, currentlyHas: boolean) => {
