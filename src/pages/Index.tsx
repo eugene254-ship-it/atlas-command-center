@@ -6,15 +6,18 @@ import OperationalVelocity from "@/components/dashboard/OperationalVelocity";
 import EcosystemGrowth from "@/components/dashboard/EcosystemGrowth";
 import OrganizationalHealth from "@/components/dashboard/OrganizationalHealth";
 import StrategicForecast from "@/components/dashboard/StrategicForecast";
+import CompositeHealthScore from "@/components/dashboard/CompositeHealthScore";
 import { DateRangeProvider, DateRangePicker } from "@/components/dashboard/DateRangePicker";
 import ExportButton from "@/components/dashboard/ExportButton";
 import AlertNotifications from "@/components/dashboard/AlertNotifications";
-import { Activity, Menu } from "lucide-react";
+import { Activity, Menu, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
   const dashboardRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { signOut, user } = useAuth();
 
   return (
     <DateRangeProvider>
@@ -44,6 +47,15 @@ const Index = () => {
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-glow" />
                 <span className="text-xs text-muted-foreground">Live · March 2026</span>
               </div>
+              <div className="w-px h-6 bg-border/50 print:hidden" />
+              <button
+                onClick={signOut}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md bg-secondary/50 text-muted-foreground border border-border/50 hover:text-foreground hover:bg-secondary transition-all font-medium print:hidden"
+                title={user?.email || "Sign out"}
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden lg:inline">Sign Out</span>
+              </button>
             </div>
 
             {/* Mobile controls */}
@@ -95,6 +107,7 @@ const Index = () => {
             </p>
           </motion.div>
 
+          <CompositeHealthScore />
           <StrategicOverview />
           <MarketExpansion />
           <OperationalVelocity />
