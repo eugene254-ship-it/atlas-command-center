@@ -11,9 +11,11 @@ import { DateRangeProvider, DateRangePicker } from "@/components/dashboard/DateR
 import ExportButton from "@/components/dashboard/ExportButton";
 import AlertNotifications from "@/components/dashboard/AlertNotifications";
 import AdminSection from "@/components/dashboard/AdminSection";
-import { Activity, Menu, LogOut } from "lucide-react";
+import { Activity, Menu, LogOut, Shield } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const dashboardRef = useRef<HTMLDivElement>(null);
