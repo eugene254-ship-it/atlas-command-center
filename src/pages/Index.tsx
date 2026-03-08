@@ -12,6 +12,10 @@ import ExportButton from "@/components/dashboard/ExportButton";
 import AlertNotifications from "@/components/dashboard/AlertNotifications";
 import AdminSection from "@/components/dashboard/AdminSection";
 import { AdminNotificationBell } from "@/components/dashboard/AdminNotificationBell";
+import ActivityFeed from "@/components/dashboard/ActivityFeed";
+import QuickActions from "@/components/dashboard/QuickActions";
+import KpiGoalTracker from "@/components/dashboard/KpiGoalTracker";
+import { useRealtimeSync } from "@/hooks/useRealtimeMetrics";
 import { Activity, Menu, LogOut, Shield } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,6 +28,8 @@ const Index = () => {
   const { signOut, user } = useAuth();
   const { isAdmin } = useUserRole();
   const navigate = useNavigate();
+
+  useRealtimeSync();
 
   return (
     <DateRangeProvider>
@@ -127,6 +133,15 @@ const Index = () => {
           </motion.div>
 
           <CompositeHealthScore />
+          
+          {/* Admin Quick Actions */}
+          <AdminSection label="Quick Actions">
+            <QuickActions />
+          </AdminSection>
+
+          {/* KPI Goal Tracking */}
+          <KpiGoalTracker />
+
           <StrategicOverview />
           <MarketExpansion />
           <OperationalVelocity />
@@ -136,6 +151,11 @@ const Index = () => {
           </AdminSection>
           <AdminSection label="Strategic Forecast">
             <StrategicForecast />
+          </AdminSection>
+
+          {/* Activity Feed (Admin only) */}
+          <AdminSection label="Activity Feed">
+            <ActivityFeed />
           </AdminSection>
 
           {/* Footer */}

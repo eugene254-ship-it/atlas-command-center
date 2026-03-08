@@ -151,6 +151,39 @@ export type Database = {
         }
         Relationships: []
       }
+      kpi_targets: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          metric_key: string
+          target_deadline: string | null
+          target_label: string | null
+          target_value: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          metric_key: string
+          target_deadline?: string | null
+          target_label?: string | null
+          target_value: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          metric_key?: string
+          target_deadline?: string | null
+          target_label?: string | null
+          target_value?: number
+        }
+        Relationships: []
+      }
       metric_alerts: {
         Row: {
           alert_type: string
