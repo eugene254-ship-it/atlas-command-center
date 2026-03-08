@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
 
-    // Helper to log admin actions
+    // Helper to log admin actions + create notification
     const logAction = async (actionName: string, targetUserId: string | null, targetEmail: string | null, details: Record<string, unknown> = {}) => {
       await adminClient.from("admin_activity_log").insert({
         admin_user_id: user.id,
@@ -60,6 +60,15 @@ Deno.serve(async (req) => {
         target_user_id: targetUserId,
         target_email: targetEmail,
         details,
+      });
+    };
+
+    const notify = async (eventType: string, title: string, message: string, metadata: Record<string, unknown> = {}) => {
+      await adminClient.from("admin_notifications").insert({
+        event_type: eventType,
+        title,
+        message,
+        metadata,
       });
     };
 
