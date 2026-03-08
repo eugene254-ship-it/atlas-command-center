@@ -11,6 +11,7 @@ import { DateRangeProvider, DateRangePicker } from "@/components/dashboard/DateR
 import ExportButton from "@/components/dashboard/ExportButton";
 import AlertNotifications from "@/components/dashboard/AlertNotifications";
 import AdminSection from "@/components/dashboard/AdminSection";
+import { AdminNotificationBell } from "@/components/dashboard/AdminNotificationBell";
 import { Activity, Menu, LogOut, Shield } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
