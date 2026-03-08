@@ -732,6 +732,27 @@ const Admin = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Bulk confirmation dialog */}
+        <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm bulk role change</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will {confirmAction?.grant ? "grant" : "revoke"} the <span className="font-semibold text-foreground">{confirmAction?.role}</span> role
+                for {selectedIds.size} selected user{selectedIds.size !== 1 ? "s" : ""}. This action will be logged.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => confirmAction && bulkSetRole(confirmAction.role, confirmAction.grant)}
+              >
+                {confirmAction?.grant ? "Grant" : "Revoke"} Role
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );
