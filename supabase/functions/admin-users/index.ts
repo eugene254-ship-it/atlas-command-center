@@ -155,6 +155,45 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (req.method === "POST" && action === "toggle_ban") {
+      const { user_id, ban } = await req.json();
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "user_id required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Prevent self-ban
+      if (user_id === user.id) {
+        return new Response(JSON.stringify({ error: "Cannot suspend your own account" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const updateData = ban
+        ? { ban_duration: "876000h" } // ~100 years
+        : { ban_duration: "none" };
+
+      const { error } = await adminClient.auth.admin.updateUserById(user_id, updateData);
+      if (error) throw error;
+
+      const { data: { users: allUsers } } = await adminClient.auth.admin.listUsers({ perPage: 100 });
+      const targetUser = allUsers?.find((u: any) => u.id === user_id);
+
+      await logAction(
+        ban ? "user_suspended" : "user_reactivated",
+        user_id,
+        targetUser?.email || null,
+        {}
+      );
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Unknown action" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
