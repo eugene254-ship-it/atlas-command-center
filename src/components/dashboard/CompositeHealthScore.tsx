@@ -1,25 +1,59 @@
 import { motion } from "framer-motion";
 import DashboardSection from "./DashboardSection";
+import { useMetrics } from "@/hooks/useMetrics";
+import { useMemo } from "react";
 
 interface LayerScore {
   label: string;
   score: number;
   weight: number;
   color: string;
+  section: string;
 }
 
-const layers: LayerScore[] = [
-  { label: "Strategic Overview", score: 88, weight: 0.25, color: "hsl(var(--primary))" },
-  { label: "Market Expansion", score: 82, weight: 0.15, color: "hsl(var(--chart-3))" },
-  { label: "Operational Velocity", score: 91, weight: 0.20, color: "hsl(var(--chart-2))" },
-  { label: "Ecosystem Growth", score: 85, weight: 0.15, color: "hsl(var(--primary))" },
-  { label: "Organizational Health", score: 78, weight: 0.15, color: "hsl(var(--chart-4))" },
-  { label: "Strategic Forecast", score: 76, weight: 0.10, color: "hsl(var(--chart-3))" },
+const LAYER_CONFIG = [
+  { label: "Strategic Overview", section: "strategic_overview", weight: 0.25, color: "hsl(var(--primary))" },
+  { label: "Market Expansion", section: "market_expansion", weight: 0.15, color: "hsl(var(--chart-3))" },
+  { label: "Operational Velocity", section: "operational_velocity", weight: 0.20, color: "hsl(var(--chart-2))" },
+  { label: "Ecosystem Growth", section: "ecosystem_growth", weight: 0.15, color: "hsl(var(--primary))" },
+  { label: "Organizational Health", section: "organizational_health", weight: 0.15, color: "hsl(var(--chart-4))" },
+  { label: "Strategic Forecast", section: "strategic_forecast", weight: 0.10, color: "hsl(var(--chart-3))" },
 ];
 
-const compositeScore = Math.round(
-  layers.reduce((sum, l) => sum + l.score * l.weight, 0)
-);
+// Map sections to representative metric keys and how to score them (0-100)
+const SECTION_SCORERS: Record<string, (metrics: Record<string, number>) => number> = {
+  strategic_overview: (m) => {
+    const arrScore = Math.min(100, (m["arr"] || 0) / 10 * 100); // 10M = 100
+    const nrrScore = Math.min(100, (m["nrr"] || 100));
+    const churnScore = Math.max(0, 100 - (m["churn_rate"] || 0) * 20); // 5% = 0
+    return Math.round((arrScore + nrrScore + churnScore) / 3);
+  },
+  market_expansion: (m) => {
+    const regions = Math.min(100, (m["active_regions"] || 0) / 15 * 100);
+    const penetration = Math.min(100, (m["market_penetration"] || 0));
+    return Math.round((regions + penetration) / 2);
+  },
+  operational_velocity: (m) => {
+    const deploys = Math.min(100, (m["deployment_frequency"] || 0) / 50 * 100);
+    const ttv = Math.max(0, 100 - (m["time_to_value"] || 30));
+    return Math.round((deploys + ttv) / 2);
+  },
+  ecosystem_growth: (m) => {
+    const partners = Math.min(100, (m["active_partners"] || 0) / 50 * 100);
+    const regen = Math.min(100, (m["regenerative_assets"] || 0) / 200 * 100);
+    return Math.round((partners + regen) / 2);
+  },
+  organizational_health: (m) => {
+    const capacity = Math.min(100, (m["team_capacity"] || 0));
+    const initiatives = Math.min(100, (m["initiative_completion"] || 0));
+    return Math.round((capacity + initiatives) / 2);
+  },
+  strategic_forecast: (m) => {
+    const confidence = Math.min(100, (m["forecast_confidence"] || 0));
+    const growth = Math.min(100, (m["projected_growth"] || 0) * 5);
+    return Math.round((confidence + growth) / 2);
+  },
+};
 
 const getGrade = (score: number) => {
   if (score >= 90) return { grade: "A", label: "Exceptional", className: "text-primary" };
@@ -30,7 +64,39 @@ const getGrade = (score: number) => {
 };
 
 const CompositeHealthScore = () => {
+  const { data: allMetrics, isLoading } = useMetrics();
+
+  const layers = useMemo<LayerScore[]>(() => {
+    if (!allMetrics?.length) return LAYER_CONFIG.map((c) => ({ ...c, score: 0 }));
+
+    return LAYER_CONFIG.map((config) => {
+      const sectionMetrics = allMetrics.filter((m) => m.section === config.section);
+      // Get latest value per metric_key
+      const latest: Record<string, number> = {};
+      for (const m of sectionMetrics) {
+        if (!latest[m.metric_key]) latest[m.metric_key] = m.metric_value;
+      }
+      const scorer = SECTION_SCORERS[config.section];
+      const score = scorer ? scorer(latest) : 0;
+      return { ...config, score: Math.min(100, Math.max(0, score)) };
+    });
+  }, [allMetrics]);
+
+  const compositeScore = Math.round(layers.reduce((sum, l) => sum + l.score * l.weight, 0));
   const { grade, label, className } = getGrade(compositeScore);
+
+  const strongest = [...layers].sort((a, b) => b.score - a.score)[0];
+  const weakest = [...layers].sort((a, b) => a.score - b.score)[0];
+
+  if (isLoading) {
+    return (
+      <DashboardSection title="Executive Health Index — Composite Signal" delay={0.05}>
+        <div className="glass-surface rounded-lg p-5 h-40 flex items-center justify-center">
+          <div className="w-5 h-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        </div>
+      </DashboardSection>
+    );
+  }
 
   return (
     <DashboardSection title="Executive Health Index — Composite Signal" delay={0.05}>
@@ -100,10 +166,10 @@ const CompositeHealthScore = () => {
         {/* Key signals */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-4 border-t border-border/30">
           {[
-            { label: "Strongest", value: "Ops Velocity", detail: "91/100" },
-            { label: "Weakest", value: "Forecast", detail: "76/100" },
-            { label: "Trend", value: "Improving", detail: "+3 pts/mo" },
-            { label: "Risk Level", value: "Low", detail: "1 watch item" },
+            { label: "Strongest", value: strongest?.label.split(" ").pop() || "—", detail: `${strongest?.score || 0}/100` },
+            { label: "Weakest", value: weakest?.label.split(" ").pop() || "—", detail: `${weakest?.score || 0}/100` },
+            { label: "Composite", value: compositeScore >= 80 ? "Strong" : compositeScore >= 60 ? "Moderate" : "Weak", detail: `${compositeScore}/100` },
+            { label: "Sections", value: `${layers.filter(l => l.score >= 70).length}/6`, detail: "above 70" },
           ].map((signal) => (
             <div key={signal.label} className="text-xs space-y-0.5">
               <span className="text-muted-foreground">{signal.label}</span>
