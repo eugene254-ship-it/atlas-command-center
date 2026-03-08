@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 const Index = () => {
   const dashboardRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { signOut, user } = useAuth();
 
   return (
     <DateRangeProvider>
