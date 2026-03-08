@@ -198,6 +198,13 @@ Deno.serve(async (req) => {
         {}
       );
 
+      await notify(
+        ban ? "user_suspended" : "user_reactivated",
+        ban ? "User Suspended" : "User Reactivated",
+        `${targetUser?.email || user_id} was ${ban ? "suspended" : "reactivated"} by admin.`,
+        { target_email: targetUser?.email, admin_email: user.email }
+      );
+
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
