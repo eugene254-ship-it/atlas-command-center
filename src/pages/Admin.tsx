@@ -26,9 +26,21 @@ import {
   CheckSquare,
   Square,
   MinusSquare,
+  Ban,
+  UserCheck,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface UserRecord {
   id: string;
@@ -36,6 +48,7 @@ interface UserRecord {
   created_at: string;
   last_sign_in_at: string | null;
   email_confirmed_at: string | null;
+  banned_until: string | null;
   roles: string[];
 }
 
@@ -57,6 +70,8 @@ const ACTION_LABELS: Record<string, string> = {
   role_granted: "Granted role",
   role_revoked: "Revoked role",
   user_invited: "Invited user",
+  user_suspended: "Suspended user",
+  user_reactivated: "Reactivated user",
 };
 
 const downloadCsv = (filename: string, headers: string[], rows: string[][]) => {
@@ -131,6 +146,8 @@ const Admin = () => {
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkProcessing, setBulkProcessing] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{ role: string; grant: boolean } | null>(null);
+  const [banningUser, setBanningUser] = useState<string | null>(null);
 
   const apiCall = useCallback(
     async (action: string, method: string, body?: Record<string, unknown>) => {
@@ -259,7 +276,21 @@ const Admin = () => {
     });
     setSelectedIds(new Set());
     setBulkProcessing(false);
+    setConfirmAction(null);
     await fetchUsers();
+  };
+
+  const toggleBan = async (userId: string, ban: boolean) => {
+    setBanningUser(userId);
+    try {
+      await apiCall("toggle_ban", "POST", { user_id: userId, ban });
+      toast({ title: ban ? "User suspended" : "User reactivated" });
+      await fetchUsers();
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setBanningUser(null);
+    }
   };
 
   const toggleRole = async (userId: string, role: string, currentlyHas: boolean) => {
@@ -476,7 +507,7 @@ const Admin = () => {
                       {ROLE_OPTIONS.map((role) => (
                         <div key={role} className="flex gap-1">
                           <button
-                            onClick={() => bulkSetRole(role, true)}
+                            onClick={() => setConfirmAction({ role, grant: true })}
                             disabled={bulkProcessing}
                             className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
                           >
@@ -484,7 +515,7 @@ const Admin = () => {
                             Grant {role}
                           </button>
                           <button
-                            onClick={() => bulkSetRole(role, false)}
+                            onClick={() => setConfirmAction({ role, grant: false })}
                             disabled={bulkProcessing}
                             className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border bg-secondary/30 text-muted-foreground border-border/30 hover:text-foreground transition-all disabled:opacity-50"
                           >
@@ -533,12 +564,13 @@ const Admin = () => {
                         <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Status</th>
                         <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider hidden md:table-cell">Last Sign In</th>
                         <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">Roles</th>
+                        <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider hidden lg:table-cell">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {paginatedUsers.length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                          <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">
                             No users found.
                           </td>
                         </tr>
@@ -567,7 +599,12 @@ const Admin = () => {
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-2">
                                   <Mail className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                                  <span className="text-foreground text-xs sm:text-sm truncate max-w-[180px]">{u.email}</span>
+                                  <span className={`text-xs sm:text-sm truncate max-w-[180px] ${u.banned_until ? "text-muted-foreground line-through" : "text-foreground"}`}>{u.email}</span>
+                                  {u.banned_until && (
+                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-destructive/10 text-destructive border border-destructive/20">
+                                      <Ban className="w-2.5 h-2.5" /> Suspended
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="text-[10px] text-muted-foreground mt-0.5 pl-5.5">
                                   Joined {new Date(u.created_at).toLocaleDateString()}
@@ -613,6 +650,26 @@ const Admin = () => {
                                     );
                                   })}
                                 </div>
+                              </td>
+                              <td className="px-4 py-3 hidden lg:table-cell">
+                                <button
+                                  onClick={() => toggleBan(u.id, !u.banned_until)}
+                                  disabled={banningUser === u.id}
+                                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border transition-all ${
+                                    u.banned_until
+                                      ? "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+                                      : "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20"
+                                  }`}
+                                >
+                                  {banningUser === u.id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : u.banned_until ? (
+                                    <UserCheck className="w-3 h-3" />
+                                  ) : (
+                                    <Ban className="w-3 h-3" />
+                                  )}
+                                  {u.banned_until ? "Reactivate" : "Suspend"}
+                                </button>
                               </td>
                             </motion.tr>
                           );
@@ -675,6 +732,27 @@ const Admin = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Bulk confirmation dialog */}
+        <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirm bulk role change</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will {confirmAction?.grant ? "grant" : "revoke"} the <span className="font-semibold text-foreground">{confirmAction?.role}</span> role
+                for {selectedIds.size} selected user{selectedIds.size !== 1 ? "s" : ""}. This action will be logged.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => confirmAction && bulkSetRole(confirmAction.role, confirmAction.grant)}
+              >
+                {confirmAction?.grant ? "Grant" : "Revoke"} Role
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );
