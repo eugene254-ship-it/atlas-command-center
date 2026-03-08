@@ -22,6 +22,10 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  Download,
+  CheckSquare,
+  Square,
+  MinusSquare,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -53,6 +57,18 @@ const ACTION_LABELS: Record<string, string> = {
   role_granted: "Granted role",
   role_revoked: "Revoked role",
   user_invited: "Invited user",
+};
+
+const downloadCsv = (filename: string, headers: string[], rows: string[][]) => {
+  const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+  const csv = [headers.map(escape).join(","), ...rows.map((r) => r.map(escape).join(","))].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 };
 
 const Pagination = ({
@@ -111,6 +127,10 @@ const Admin = () => {
   // Pagination
   const [usersPage, setUsersPage] = useState(1);
   const [logsPage, setLogsPage] = useState(1);
+
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkProcessing, setBulkProcessing] = useState(false);
 
   const apiCall = useCallback(
     async (action: string, method: string, body?: Record<string, unknown>) => {
@@ -188,15 +208,59 @@ const Admin = () => {
     usersPage * USERS_PER_PAGE
   );
 
-  // Reset page when filters change
   useEffect(() => { setUsersPage(1); }, [searchQuery, roleFilter]);
 
-  // Paginated logs
   const logsTotalPages = Math.max(1, Math.ceil(logs.length / LOGS_PER_PAGE));
   const paginatedLogs = logs.slice(
     (logsPage - 1) * LOGS_PER_PAGE,
     logsPage * LOGS_PER_PAGE
   );
+
+  // Selection helpers
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const allPageSelected = paginatedUsers.length > 0 && paginatedUsers.every((u) => selectedIds.has(u.id));
+  const somePageSelected = paginatedUsers.some((u) => selectedIds.has(u.id));
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allPageSelected) {
+        paginatedUsers.forEach((u) => next.delete(u.id));
+      } else {
+        paginatedUsers.forEach((u) => next.add(u.id));
+      }
+      return next;
+    });
+  };
+
+  const bulkSetRole = async (role: string, grant: boolean) => {
+    if (selectedIds.size === 0) return;
+    setBulkProcessing(true);
+    let success = 0;
+    let failed = 0;
+    for (const userId of selectedIds) {
+      try {
+        await apiCall("set_role", "POST", { user_id: userId, role, grant });
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+    toast({
+      title: `Bulk ${grant ? "grant" : "revoke"} complete`,
+      description: `${success} succeeded${failed ? `, ${failed} failed` : ""}.`,
+    });
+    setSelectedIds(new Set());
+    setBulkProcessing(false);
+    await fetchUsers();
+  };
 
   const toggleRole = async (userId: string, role: string, currentlyHas: boolean) => {
     setToggling(`${userId}-${role}`);
@@ -224,6 +288,33 @@ const Admin = () => {
     } finally {
       setInviting(false);
     }
+  };
+
+  const exportUsersCsv = () => {
+    downloadCsv(
+      "users.csv",
+      ["Email", "Roles", "Verified", "Joined", "Last Sign In"],
+      filteredUsers.map((u) => [
+        u.email,
+        u.roles.join("; "),
+        u.email_confirmed_at ? "Yes" : "No",
+        new Date(u.created_at).toLocaleDateString(),
+        u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString() : "Never",
+      ])
+    );
+  };
+
+  const exportLogsCsv = () => {
+    downloadCsv(
+      "activity-log.csv",
+      ["Action", "Target Email", "Details", "Timestamp"],
+      logs.map((l) => [
+        ACTION_LABELS[l.action] || l.action,
+        l.target_email || "",
+        JSON.stringify(l.details),
+        new Date(l.created_at).toLocaleString(),
+      ])
+    );
   };
 
   if (authLoading || roleLoading || loading) {
@@ -290,22 +381,31 @@ const Admin = () => {
           </form>
         </motion.div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 mb-4">
-          {([["users", Users, "Users"], ["log", ScrollText, "Activity Log"]] as const).map(([key, Icon, label]) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key as "users" | "log")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${
-                activeTab === key
-                  ? "bg-primary/15 text-primary border-primary/30"
-                  : "bg-secondary/30 text-muted-foreground border-border/30 hover:text-foreground"
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {label}
-            </button>
-          ))}
+        {/* Tabs + Export */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex gap-1">
+            {([["users", Users, "Users"], ["log", ScrollText, "Activity Log"]] as const).map(([key, Icon, label]) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key as "users" | "log")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${
+                  activeTab === key
+                    ? "bg-primary/15 text-primary border-primary/30"
+                    : "bg-secondary/30 text-muted-foreground border-border/30 hover:text-foreground"
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={activeTab === "users" ? exportUsersCsv : exportLogsCsv}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md border border-border/30 bg-secondary/30 text-muted-foreground hover:text-foreground transition-all"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export CSV
+          </button>
         </div>
 
         <AnimatePresence mode="wait">
@@ -359,6 +459,51 @@ const Admin = () => {
                 </div>
               </div>
 
+              {/* Bulk actions bar */}
+              <AnimatePresence>
+                {selectedIds.size > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="glass-surface rounded-lg border border-primary/20 p-3"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-medium text-foreground">
+                        {selectedIds.size} selected
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">—</span>
+                      {ROLE_OPTIONS.map((role) => (
+                        <div key={role} className="flex gap-1">
+                          <button
+                            onClick={() => bulkSetRole(role, true)}
+                            disabled={bulkProcessing}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
+                          >
+                            {bulkProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+                            Grant {role}
+                          </button>
+                          <button
+                            onClick={() => bulkSetRole(role, false)}
+                            disabled={bulkProcessing}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border bg-secondary/30 text-muted-foreground border-border/30 hover:text-foreground transition-all disabled:opacity-50"
+                          >
+                            <XCircle className="w-3 h-3" />
+                            Revoke
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => setSelectedIds(new Set())}
+                        className="ml-auto text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               {/* Filtered count */}
               {(searchQuery || roleFilter) && (
                 <p className="text-[11px] text-muted-foreground">
@@ -373,6 +518,17 @@ const Admin = () => {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-border/30">
+                        <th className="w-10 px-3 py-3">
+                          <button onClick={toggleSelectAll} className="text-muted-foreground hover:text-foreground transition-colors">
+                            {allPageSelected ? (
+                              <CheckSquare className="w-4 h-4 text-primary" />
+                            ) : somePageSelected ? (
+                              <MinusSquare className="w-4 h-4 text-primary/60" />
+                            ) : (
+                              <Square className="w-4 h-4" />
+                            )}
+                          </button>
+                        </th>
                         <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">User</th>
                         <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Status</th>
                         <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wider hidden md:table-cell">Last Sign In</th>
@@ -382,71 +538,85 @@ const Admin = () => {
                     <tbody>
                       {paginatedUsers.length === 0 ? (
                         <tr>
-                          <td colSpan={4} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                          <td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">
                             No users found.
                           </td>
                         </tr>
                       ) : (
-                        paginatedUsers.map((u, i) => (
-                          <motion.tr
-                            key={u.id}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: i * 0.03 }}
-                            className="border-b border-border/20 last:border-0 hover:bg-secondary/20 transition-colors"
-                          >
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-2">
-                                <Mail className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                                <span className="text-foreground text-xs sm:text-sm truncate max-w-[180px]">{u.email}</span>
-                              </div>
-                              <div className="text-[10px] text-muted-foreground mt-0.5 pl-5.5">
-                                Joined {new Date(u.created_at).toLocaleDateString()}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 hidden sm:table-cell">
-                              {u.email_confirmed_at ? (
-                                <span className="inline-flex items-center gap-1 text-xs text-primary">
-                                  <CheckCircle className="w-3 h-3" /> Verified
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 text-xs text-accent">
-                                  <XCircle className="w-3 h-3" /> Unverified
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-4 py-3 hidden md:table-cell">
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                <Clock className="w-3 h-3" />
-                                {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString() : "Never"}
-                              </div>
-                            </td>
-                            <td className="px-4 py-3">
-                              <div className="flex flex-wrap gap-1.5">
-                                {ROLE_OPTIONS.map((role) => {
-                                  const has = u.roles.includes(role);
-                                  const isToggling = toggling === `${u.id}-${role}`;
-                                  const Icon = role === "admin" ? ShieldAlert : role === "moderator" ? ShieldCheck : Shield;
-                                  return (
-                                    <button
-                                      key={role}
-                                      onClick={() => toggleRole(u.id, role, has)}
-                                      disabled={isToggling}
-                                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border transition-all ${
-                                        has
-                                          ? "bg-primary/15 text-primary border-primary/30 hover:bg-primary/25"
-                                          : "bg-secondary/30 text-muted-foreground border-border/30 hover:bg-secondary/50 hover:text-foreground"
-                                      }`}
-                                    >
-                                      {isToggling ? <Loader2 className="w-3 h-3 animate-spin" /> : <Icon className="w-3 h-3" />}
-                                      {role}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </td>
-                          </motion.tr>
-                        ))
+                        paginatedUsers.map((u, i) => {
+                          const isSelected = selectedIds.has(u.id);
+                          return (
+                            <motion.tr
+                              key={u.id}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ delay: i * 0.03 }}
+                              className={`border-b border-border/20 last:border-0 transition-colors ${
+                                isSelected ? "bg-primary/5" : "hover:bg-secondary/20"
+                              }`}
+                            >
+                              <td className="w-10 px-3 py-3">
+                                <button onClick={() => toggleSelect(u.id)} className="text-muted-foreground hover:text-foreground transition-colors">
+                                  {isSelected ? (
+                                    <CheckSquare className="w-4 h-4 text-primary" />
+                                  ) : (
+                                    <Square className="w-4 h-4" />
+                                  )}
+                                </button>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <Mail className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                                  <span className="text-foreground text-xs sm:text-sm truncate max-w-[180px]">{u.email}</span>
+                                </div>
+                                <div className="text-[10px] text-muted-foreground mt-0.5 pl-5.5">
+                                  Joined {new Date(u.created_at).toLocaleDateString()}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 hidden sm:table-cell">
+                                {u.email_confirmed_at ? (
+                                  <span className="inline-flex items-center gap-1 text-xs text-primary">
+                                    <CheckCircle className="w-3 h-3" /> Verified
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 text-xs text-accent">
+                                    <XCircle className="w-3 h-3" /> Unverified
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 hidden md:table-cell">
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Clock className="w-3 h-3" />
+                                  {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleString() : "Never"}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex flex-wrap gap-1.5">
+                                  {ROLE_OPTIONS.map((role) => {
+                                    const has = u.roles.includes(role);
+                                    const isToggling = toggling === `${u.id}-${role}`;
+                                    const Icon = role === "admin" ? ShieldAlert : role === "moderator" ? ShieldCheck : Shield;
+                                    return (
+                                      <button
+                                        key={role}
+                                        onClick={() => toggleRole(u.id, role, has)}
+                                        disabled={isToggling}
+                                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border transition-all ${
+                                          has
+                                            ? "bg-primary/15 text-primary border-primary/30 hover:bg-primary/25"
+                                            : "bg-secondary/30 text-muted-foreground border-border/30 hover:bg-secondary/50 hover:text-foreground"
+                                        }`}
+                                      >
+                                        {isToggling ? <Loader2 className="w-3 h-3 animate-spin" /> : <Icon className="w-3 h-3" />}
+                                        {role}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </td>
+                            </motion.tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
