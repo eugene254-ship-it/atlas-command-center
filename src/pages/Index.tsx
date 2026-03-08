@@ -29,6 +29,8 @@ const Index = () => {
   const { isAdmin } = useUserRole();
   const navigate = useNavigate();
 
+  useRealtimeSync();
+
   return (
     <DateRangeProvider>
       <div className="min-h-screen bg-background">
