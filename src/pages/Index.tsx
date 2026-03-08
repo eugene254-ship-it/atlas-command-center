@@ -55,6 +55,7 @@ const Index = () => {
               </div>
               {isAdmin && (
                 <>
+                  <AdminNotificationBell />
                   <button
                     onClick={() => navigate("/admin")}
                     className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md bg-secondary/50 text-muted-foreground border border-border/50 hover:text-foreground hover:bg-secondary transition-all font-medium print:hidden"
