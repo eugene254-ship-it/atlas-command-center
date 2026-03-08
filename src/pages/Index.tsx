@@ -21,6 +21,8 @@ const Index = () => {
   const dashboardRef = useRef<HTMLDivElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { signOut, user } = useAuth();
+  const { isAdmin } = useUserRole();
+  const navigate = useNavigate();
 
   return (
     <DateRangeProvider>
