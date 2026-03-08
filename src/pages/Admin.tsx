@@ -507,7 +507,7 @@ const Admin = () => {
                       {ROLE_OPTIONS.map((role) => (
                         <div key={role} className="flex gap-1">
                           <button
-                            onClick={() => bulkSetRole(role, true)}
+                            onClick={() => setConfirmAction({ role, grant: true })}
                             disabled={bulkProcessing}
                             className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border bg-primary/10 text-primary border-primary/20 hover:bg-primary/20 transition-all disabled:opacity-50"
                           >
@@ -515,7 +515,7 @@ const Admin = () => {
                             Grant {role}
                           </button>
                           <button
-                            onClick={() => bulkSetRole(role, false)}
+                            onClick={() => setConfirmAction({ role, grant: false })}
                             disabled={bulkProcessing}
                             className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border bg-secondary/30 text-muted-foreground border-border/30 hover:text-foreground transition-all disabled:opacity-50"
                           >
