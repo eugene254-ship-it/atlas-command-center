@@ -10,6 +10,7 @@ import CompositeHealthScore from "@/components/dashboard/CompositeHealthScore";
 import { DateRangeProvider, DateRangePicker } from "@/components/dashboard/DateRangePicker";
 import ExportButton from "@/components/dashboard/ExportButton";
 import AlertNotifications from "@/components/dashboard/AlertNotifications";
+import AdminSection from "@/components/dashboard/AdminSection";
 import { Activity, Menu, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
