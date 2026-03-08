@@ -107,6 +107,7 @@ const Index = () => {
             </p>
           </motion.div>
 
+          <CompositeHealthScore />
           <StrategicOverview />
           <MarketExpansion />
           <OperationalVelocity />
