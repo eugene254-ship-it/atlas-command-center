@@ -28,12 +28,21 @@ const Auth = () => {
         });
         setMode("login");
       } else if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
+        // Notify admins of new signup
+        if (data.user) {
+          await supabase.from("admin_notifications").insert({
+            event_type: "user_signup",
+            title: "New User Signup",
+            message: `${email} just created an account.`,
+            metadata: { email, user_id: data.user.id },
+          });
+        }
         toast({
           title: "Account created",
           description: "Check your email to verify your account before signing in.",
