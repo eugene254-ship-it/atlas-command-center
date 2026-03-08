@@ -22,7 +22,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify calling user is admin
     const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -53,11 +52,21 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const action = url.searchParams.get("action");
 
+    // Helper to log admin actions
+    const logAction = async (actionName: string, targetUserId: string | null, targetEmail: string | null, details: Record<string, unknown> = {}) => {
+      await adminClient.from("admin_activity_log").insert({
+        admin_user_id: user.id,
+        action: actionName,
+        target_user_id: targetUserId,
+        target_email: targetEmail,
+        details,
+      });
+    };
+
     if (req.method === "GET" && action === "list_users") {
       const { data: { users }, error } = await adminClient.auth.admin.listUsers({ perPage: 100 });
       if (error) throw error;
 
-      // Get all roles
       const { data: allRoles } = await adminClient.from("user_roles").select("*");
 
       const usersWithRoles = users.map((u: any) => ({
@@ -70,6 +79,19 @@ Deno.serve(async (req) => {
       }));
 
       return new Response(JSON.stringify({ users: usersWithRoles }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (req.method === "GET" && action === "activity_log") {
+      const { data, error } = await adminClient
+        .from("admin_activity_log")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ logs: data }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -97,7 +119,37 @@ Deno.serve(async (req) => {
         if (error) throw error;
       }
 
+      // Find target email for log
+      const { data: { users: allUsers } } = await adminClient.auth.admin.listUsers({ perPage: 100 });
+      const targetUser = allUsers?.find((u: any) => u.id === user_id);
+
+      await logAction(
+        grant ? "role_granted" : "role_revoked",
+        user_id,
+        targetUser?.email || null,
+        { role }
+      );
+
       return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (req.method === "POST" && action === "invite_user") {
+      const { email } = await req.json();
+      if (!email) {
+        return new Response(JSON.stringify({ error: "email required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data, error } = await adminClient.auth.admin.inviteUserByEmail(email);
+      if (error) throw error;
+
+      await logAction("user_invited", data.user?.id || null, email, {});
+
+      return new Response(JSON.stringify({ success: true, user: data.user }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
