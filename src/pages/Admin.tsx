@@ -146,6 +146,8 @@ const Admin = () => {
   // Bulk selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkProcessing, setBulkProcessing] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{ role: string; grant: boolean } | null>(null);
+  const [banningUser, setBanningUser] = useState<string | null>(null);
 
   const apiCall = useCallback(
     async (action: string, method: string, body?: Record<string, unknown>) => {
