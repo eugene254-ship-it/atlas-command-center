@@ -5,7 +5,7 @@ import { Activity, LogIn, UserPlus, Mail, Lock, Eye, EyeOff } from "lucide-react
 import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
