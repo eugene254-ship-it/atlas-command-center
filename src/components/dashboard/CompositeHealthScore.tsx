@@ -53,9 +53,10 @@ const SECTION_SCORERS: Record<string, (metrics: Record<string, number>) => numbe
     return Math.round((capacity + initiatives + rpe) / 3);
   },
   strategic_forecast: (m) => {
-    // Derive forecast confidence from overall data quality
-    const hasData = Object.keys(m).length;
-    return Math.min(100, hasData > 0 ? 75 : 0); // Base score when data exists
+    const confidence = Math.min(100, (m["forecast_confidence"] || 0));
+    const growth = Math.min(100, (m["projected_growth"] || 0) * 4); // 25% = 100
+    const variance = Math.max(0, 100 - (m["scenario_variance"] || 20) * 3); // Low variance = good
+    return Math.round((confidence + growth + variance) / 3);
   },
 };
 
