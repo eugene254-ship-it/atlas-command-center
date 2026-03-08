@@ -17,7 +17,17 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      if (mode === "signup") {
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        toast({
+          title: "Reset link sent",
+          description: "Check your email for the password reset link.",
+        });
+        setMode("login");
+      } else if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -26,7 +36,7 @@ const Auth = () => {
         if (error) throw error;
         toast({
           title: "Account created",
-          description: "You can now sign in with your credentials.",
+          description: "Check your email to verify your account before signing in.",
         });
         setMode("login");
       } else {
