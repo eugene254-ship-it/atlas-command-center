@@ -651,6 +651,26 @@ const Admin = () => {
                                   })}
                                 </div>
                               </td>
+                              <td className="px-4 py-3 hidden lg:table-cell">
+                                <button
+                                  onClick={() => toggleBan(u.id, !u.banned_until)}
+                                  disabled={banningUser === u.id}
+                                  className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium border transition-all ${
+                                    u.banned_until
+                                      ? "bg-primary/10 text-primary border-primary/20 hover:bg-primary/20"
+                                      : "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20"
+                                  }`}
+                                >
+                                  {banningUser === u.id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : u.banned_until ? (
+                                    <UserCheck className="w-3 h-3" />
+                                  ) : (
+                                    <Ban className="w-3 h-3" />
+                                  )}
+                                  {u.banned_until ? "Reactivate" : "Suspend"}
+                                </button>
+                              </td>
                             </motion.tr>
                           );
                         })
