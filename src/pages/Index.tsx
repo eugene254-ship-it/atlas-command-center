@@ -10,6 +10,7 @@ import CompositeHealthScore from "@/components/dashboard/CompositeHealthScore";
 import { DateRangeProvider, DateRangePicker } from "@/components/dashboard/DateRangePicker";
 import ExportButton from "@/components/dashboard/ExportButton";
 import AlertNotifications from "@/components/dashboard/AlertNotifications";
+import AdminSection from "@/components/dashboard/AdminSection";
 import { Activity, Menu, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -112,8 +113,12 @@ const Index = () => {
           <MarketExpansion />
           <OperationalVelocity />
           <EcosystemGrowth />
-          <OrganizationalHealth />
-          <StrategicForecast />
+          <AdminSection label="Organizational Health">
+            <OrganizationalHealth />
+          </AdminSection>
+          <AdminSection label="Strategic Forecast">
+            <StrategicForecast />
+          </AdminSection>
 
           {/* Footer */}
           <div className="border-t border-border/30 pt-6 pb-8 text-center">
