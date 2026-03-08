@@ -6,11 +6,13 @@ import OperationalVelocity from "@/components/dashboard/OperationalVelocity";
 import EcosystemGrowth from "@/components/dashboard/EcosystemGrowth";
 import OrganizationalHealth from "@/components/dashboard/OrganizationalHealth";
 import StrategicForecast from "@/components/dashboard/StrategicForecast";
+import CompositeHealthScore from "@/components/dashboard/CompositeHealthScore";
 import { DateRangeProvider, DateRangePicker } from "@/components/dashboard/DateRangePicker";
 import ExportButton from "@/components/dashboard/ExportButton";
 import AlertNotifications from "@/components/dashboard/AlertNotifications";
-import { Activity, Menu } from "lucide-react";
+import { Activity, Menu, LogOut } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
   const dashboardRef = useRef<HTMLDivElement>(null);
