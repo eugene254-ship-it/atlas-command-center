@@ -133,6 +133,15 @@ const Index = () => {
           </motion.div>
 
           <CompositeHealthScore />
+          
+          {/* Admin Quick Actions */}
+          <AdminSection label="Quick Actions">
+            <QuickActions />
+          </AdminSection>
+
+          {/* KPI Goal Tracking */}
+          <KpiGoalTracker />
+
           <StrategicOverview />
           <MarketExpansion />
           <OperationalVelocity />
@@ -142,6 +151,11 @@ const Index = () => {
           </AdminSection>
           <AdminSection label="Strategic Forecast">
             <StrategicForecast />
+          </AdminSection>
+
+          {/* Activity Feed (Admin only) */}
+          <AdminSection label="Activity Feed">
+            <ActivityFeed />
           </AdminSection>
 
           {/* Footer */}
