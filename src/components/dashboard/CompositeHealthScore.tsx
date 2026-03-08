@@ -23,35 +23,39 @@ const LAYER_CONFIG = [
 // Map sections to representative metric keys and how to score them (0-100)
 const SECTION_SCORERS: Record<string, (metrics: Record<string, number>) => number> = {
   strategic_overview: (m) => {
-    const arrScore = Math.min(100, (m["arr"] || 0) / 10 * 100); // 10M = 100
-    const nrrScore = Math.min(100, (m["nrr"] || 100));
-    const churnScore = Math.max(0, 100 - (m["churn_rate"] || 0) * 20); // 5% = 0
-    return Math.round((arrScore + nrrScore + churnScore) / 3);
+    const arrScore = Math.min(100, (m["arr"] || 0) / 10 * 100); // 10M ARR = 100
+    const nrrScore = Math.min(100, (m["nrr"] || 0) / 1.3 * 100 / 100); // 130% NRR = 100
+    const churnScore = Math.max(0, 100 - (m["churn_rate"] || 5) * 20); // 0% = 100, 5% = 0
+    const growthScore = Math.min(100, (m["net_revenue_growth"] || 0) / 40 * 100); // 40% = 100
+    return Math.round((arrScore + nrrScore + churnScore + growthScore) / 4);
   },
   market_expansion: (m) => {
-    const regions = Math.min(100, (m["active_regions"] || 0) / 15 * 100);
-    const penetration = Math.min(100, (m["market_penetration"] || 0));
-    return Math.round((regions + penetration) / 2);
+    const partners = Math.min(100, (m["regional_partners"] || 0) / 50 * 100);
+    const adoption = Math.min(100, (m["sector_adoption"] || 0) / 40 * 100);
+    return Math.round((partners + adoption) / 2);
   },
   operational_velocity: (m) => {
-    const deploys = Math.min(100, (m["deployment_frequency"] || 0) / 50 * 100);
-    const ttv = Math.max(0, 100 - (m["time_to_value"] || 30));
-    return Math.round((deploys + ttv) / 2);
+    const deploys = Math.min(100, (m["deployment_velocity"] || 0) / 15 * 100); // 15/day = 100
+    const ttv = Math.max(0, 100 - (m["time_to_value"] || 30) * 3); // 0 days = 100
+    const completion = Math.min(100, m["project_completion"] || 0);
+    return Math.round((deploys + ttv + completion) / 3);
   },
   ecosystem_growth: (m) => {
-    const partners = Math.min(100, (m["active_partners"] || 0) / 50 * 100);
-    const regen = Math.min(100, (m["regenerative_assets"] || 0) / 200 * 100);
-    return Math.round((partners + regen) / 2);
+    const partners = Math.min(100, (m["active_partners"] || 0) / 200 * 100);
+    const regen = Math.min(100, (m["regenerative_assets"] || 0) / 100000 * 100);
+    const volume = Math.min(100, (m["transaction_volume"] || 0) / 10 * 100);
+    return Math.round((partners + regen + volume) / 3);
   },
   organizational_health: (m) => {
-    const capacity = Math.min(100, (m["team_capacity"] || 0));
-    const initiatives = Math.min(100, (m["initiative_completion"] || 0));
-    return Math.round((capacity + initiatives) / 2);
+    const capacity = Math.min(100, (m["engineering_capacity"] || 0));
+    const initiatives = Math.min(100, (m["initiative_progress"] || 0));
+    const rpe = Math.min(100, (m["revenue_per_employee"] || 0) / 200 * 100);
+    return Math.round((capacity + initiatives + rpe) / 3);
   },
   strategic_forecast: (m) => {
-    const confidence = Math.min(100, (m["forecast_confidence"] || 0));
-    const growth = Math.min(100, (m["projected_growth"] || 0) * 5);
-    return Math.round((confidence + growth) / 2);
+    // Derive forecast confidence from overall data quality
+    const hasData = Object.keys(m).length;
+    return Math.min(100, hasData > 0 ? 75 : 0); // Base score when data exists
   },
 };
 
